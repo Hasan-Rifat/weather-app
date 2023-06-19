@@ -34,11 +34,14 @@ const WeatherApp: React.FC = () => {
 
   useEffect(() => {
     getCurrentLocationWeather();
+    currentLocation;
   }, []);
 
   useEffect(() => {
     if (location) {
       fetchWeatherData();
+    } else {
+      setSearchText("");
     }
   }, [location]);
 
@@ -111,10 +114,9 @@ const WeatherApp: React.FC = () => {
 
   const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLocation(e.target.value);
-    currentLocation;
   };
 
-  /*   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  /*  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchText(e.target.value);
   }; */
 
