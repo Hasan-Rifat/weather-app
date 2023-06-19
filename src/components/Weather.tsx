@@ -27,6 +27,10 @@ const WeatherApp: React.FC = () => {
   const [currentLocation, setCurrentLocation] = useState("");
   const [currentWeather, setCurrentWeather] =
     useState<CurrentWeatherData | null>(null);
+  const [searchText, setSearchText] = useState("");
+  const [filteredWeatherData, setFilteredWeatherData] = useState<WeatherData[]>(
+    []
+  );
 
   useEffect(() => {
     getCurrentLocationWeather();
@@ -37,6 +41,12 @@ const WeatherApp: React.FC = () => {
       fetchWeatherData();
     }
   }, [location]);
+
+  useEffect(() => {
+    if (weatherData) {
+      setFilteredWeatherData(weatherData.filter(filterWeatherData));
+    }
+  }, [searchText, weatherData]);
 
   const getCurrentLocationWeather = () => {
     if (navigator.geolocation) {
@@ -81,6 +91,7 @@ const WeatherApp: React.FC = () => {
 
       const weatherData = [...last7Days, ...next7Days];
       setWeatherData(weatherData);
+      setFilteredWeatherData(weatherData);
     } catch (error) {
       console.error("Error fetching weather data:", error);
     }
@@ -102,11 +113,28 @@ const WeatherApp: React.FC = () => {
     setLocation(e.target.value);
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchText(e.target.value);
+  };
+
+  const filterWeatherData = (data: WeatherData) => {
+    if (searchText === "") {
+      return true; // Show all data when searchText is empty
+    }
+    return data.date.toLowerCase().includes(searchText.toLowerCase());
+  };
+
+  const sortWeatherData = () => {
+    const sortedData = [...filteredWeatherData];
+    sortedData.sort((a, b) => a.day.maxtemp_c - b.day.maxtemp_c);
+    setFilteredWeatherData(sortedData);
+  };
+
   return (
     <div className="w-full h-full flex items-center bg-gradient-to-tl from-green-600 to-green-400 py-10">
       <div className="container mx-auto px-4">
         <h1 className="text-4xl font-bold mb-8 text-center">Weather App</h1>
-        {/* search  */}
+        {/* search */}
         <div className="mb-8 text-center">
           <div className="relative flex items-center w-full h-12 rounded-lg focus-within:shadow-lg bg-white overflow-hidden">
             <div className="grid place-items-center h-full w-12 text-gray-300">
@@ -118,9 +146,9 @@ const WeatherApp: React.FC = () => {
                 stroke="currentColor"
               >
                 <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
                   d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
               </svg>
@@ -154,44 +182,62 @@ const WeatherApp: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 ">
           <div className="bg-gray-200 p-4 mb-8 rounded-lg shadow-lg">
-            <h2 className="text-xl mb-4 text-gray-800">Last 7 Days Weather</h2>
-            {weatherData && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {weatherData.slice(0, 7).map((data) => (
-                  <div className="bg-gray-800 text-white p-4" key={data.date}>
-                    <h3>{data.date}</h3>
-                    <p>Max Temperature: {data.day.maxtemp_c}°C</p>
-                    <p>Min Temperature: {data.day.mintemp_c}°C</p>
-                    <p>Condition: {data.day.condition.text}</p>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl text-gray-800">Last 7 Days Weather</h2>
+              <button
+                className="text-sm text-blue-500 hover:underline focus:outline-none"
+                onClick={sortWeatherData}
+              >
+                Sort by Temperature
+              </button>
+            </div>
+            {filteredWeatherData.length > 0 ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {filteredWeatherData.slice(0, 7).map((data) => (
+                  <div
+                    className="mb-4 bg-[#1f2937] p-4 rounded-lg text-white"
+                    key={data.date}
+                  >
+                    <p className="text-sm text-gray-600 mb-2">{data.date}</p>
+                    <p className="">Max Temperature: {data.day.maxtemp_c}°C</p>
+                    <p className="">Min Temperature: {data.day.mintemp_c}°C</p>
+                    <p className="">Condition: {data.day.condition.text}</p>
                     <img
                       src={data.day.condition.icon}
                       alt="Weather Icon"
-                      className="mx-auto"
+                      className="mx-auto mt-2"
                     />
                   </div>
                 ))}
               </div>
+            ) : (
+              <p className="text-sm text-gray-600">No data available.</p>
             )}
           </div>
 
           <div className="bg-gray-200 p-4 mb-8 rounded-lg shadow-lg">
-            <h2 className="text-xl mb-4 text-gray-800">Next 7 Days Weather</h2>
-            {weatherData && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {weatherData.slice(7, 14).map((data) => (
-                  <div className="bg-gray-800 text-white p-4" key={data.date}>
-                    <h3>{data.date}</h3>
-                    <p>Max Temperature: {data.day.maxtemp_c}°C</p>
-                    <p>Min Temperature: {data.day.mintemp_c}°C</p>
-                    <p>Condition: {data.day.condition.text}</p>
+            <h2 className="text-xl text-gray-800 mb-4">Next 7 Days Weather</h2>
+            {filteredWeatherData.length > 0 ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {filteredWeatherData.slice(7, 14).map((data) => (
+                  <div
+                    className="mb-4 bg-[#1f2937] p-4 rounded-lg text-white"
+                    key={data.date}
+                  >
+                    <p className="text-sm text-gray-600 mb-2">{data.date}</p>
+                    <p className="">Max Temperature: {data.day.maxtemp_c}°C</p>
+                    <p className="">Min Temperature: {data.day.mintemp_c}°C</p>
+                    <p className="">Condition: {data.day.condition.text}</p>
                     <img
                       src={data.day.condition.icon}
                       alt="Weather Icon"
-                      className="mx-auto"
+                      className="mx-auto mt-2"
                     />
                   </div>
                 ))}
               </div>
+            ) : (
+              <p className="text-sm text-gray-600">No data available.</p>
             )}
           </div>
         </div>
